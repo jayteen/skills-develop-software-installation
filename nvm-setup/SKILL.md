@@ -41,6 +41,10 @@ Remove-Item $zip
 
 > 如果 GitHub 下载失败，提示用户手动下载 `nvm-noinstall.zip` 放到 Downloads 目录，再用上述命令解压。
 
+> **为什么固定 1.2.2**：`noinstall.zip`（免安装、纯解压版）最后一个发布版本就是 **1.2.2**。
+> 2.x（当前 latest 为 v2.0.1 / v2.1.0-beta）只提供 `setup.exe` 安装包，没有 zip 包，无法做到“全部文件收进一个根目录”。
+> 需要便携布局就**必须**用 1.2.2，不要盲目升级。
+
 ### 3. 配置 settings.txt
 
 在 `$NVM_ROOT\settings.txt` 写入：
@@ -101,11 +105,17 @@ PATH 优先级：
 **关闭所有终端窗口，重新打开**（让环境变量生效），然后：
 
 ```bash
-nvm install 22          # 安装 Node 22 LTS
-nvm use 22.22.0         # 激活
+nvm install 22          # 安装 Node 22 LTS 的最新版
+nvm list                # 看实际装到的版本号（如 22.20.0）
+nvm use 22              # 激活 22.x（也可写完整版本号，如 nvm use 22.20.0）
 ```
 
+> ⚠️ **`nvm use` 需要管理员权限**：它要把 `nodejs` 目录换成符号链接。要么以管理员身份开终端，
+> 要么在系统设置里启用 **开发者模式**（设置 → 系统 → 开发者选项 → 开发人员模式）。
+> 否则会报 “Access is denied” 或静默不生效。
+
 > 如果 `nvm` 命令找不到，检查 PATH 中 `%NVM_HOME%` 是否正确展开。可以 `echo $env:NVM_HOME` 确认。
+> 新装的 Node 版本号以 `nvm list` 实际输出为准，别把示例版本号写死。
 
 ### 7. 创建全局包和缓存目录（⭐ 关键：放在 symlink 外面）
 
@@ -149,9 +159,9 @@ $env:NODE_PATH           # $NVM_ROOT\nodejs\node_modules
 
 # nvm 和 node
 nvm version              # 1.2.2
-nvm list                 # 22.22.0（当前激活）
-node --version           # v22.22.0
-npm --version            # 10.x
+nvm list                 # 列出已装版本，* 为当前激活
+node --version           # 与 nvm list 中激活版本一致（如 v22.20.0）
+npm --version            # 随 Node 附带
 
 # 全局包
 pnpm --version           # 版本号
@@ -176,9 +186,9 @@ $NVM_ROOT\
 │   ├── nodemon / nodemon.cmd
 │   ├── nrm / nrm.cmd
 │   └── node_modules\
-├── v22.22.0\                    ← Node 22 真实文件
-├── v18.12.0\                    ← Node 18（可选）
-└── nodejs\  → v22.22.0\         ← NVM_SYMLINK（符号链接）
+├── v22.20.0\                    ← Node 22 真实文件（版本号以 nvm list 为准）
+├── v18.x.x\                     ← 其他 Node 版本（可选）
+└── nodejs\  → v22.20.0\         ← NVM_SYMLINK（符号链接，nvm use 重建）
 ```
 
 ## 环境变量
@@ -215,8 +225,11 @@ C:\Programs\Nvm\nodejs    ← 替代 %NVM_SYMLINK%
 
 ## 注意事项
 
+- **版本固定在 1.2.2**：2.x 只发 `setup.exe`，没有免安装 zip；想要“全部收进一个根目录”就别升级
+- `nvm use` **需要管理员权限或开发者模式**（要重建 `nodejs` 符号链接）
 - `NVM_HOME` 和 `NVM_SYMLINK` **不能**设为同一个目录——`NVM_SYMLINK` 会被 nvm 转为符号链接，与 nvm.exe 所在目录冲突
 - 设置环境变量后**必须重启终端**才能生效
 - 安装 Node 版本后 `nodejs` 目录才会出现（由 nvm 自动创建符号链接）
 - `settings.txt` 的编码必须是 **ASCII 或 UTF-8 without BOM**，否则 nvm 可能读取失败
 - nvm-windows 1.2.2 没有 `nvm alias` 命令，使用 `nvm use` 即为设置默认版本
+- `nvm use 22` 与 `nvm use 22.20.0` 等价（前者选已装的最高 22.x），不要写死具体补丁号
